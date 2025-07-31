@@ -140,7 +140,7 @@ public class Main {
     }
 
     public static void decodeParallel(String pattern, long hashValue) {
-        if (pattern.length() > 16) {
+        if (pattern.length() > 22) {
             resultArea.setText("EAID Ήύ³€ίχ\n");
             return;
         }
