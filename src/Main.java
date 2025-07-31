@@ -69,7 +69,7 @@ public class Main {
                 注：  使用方法一时，推荐最多7个通配符@，且尽量将后几位设置为通配符@，暴力计算匹配可能会很耗时
                           如果觉得慢的话睡一觉起来后台挂一个就好了，应该能匹配的上
                           使用方法二时，不推荐设置太多通配符@，设置太多会导致匹配上的中文id能有上千上万
-                Repo: https://github.com/LaoHuaJiOfficial/EAID_Generator, Credit to ChatGPT and beloved Satori
+                Repo: https://github.com/LaoHuaJiOfficial/EAID_Generator, Credit to BV1yEmYYdEH3, ChatGPT and beloved Satori
                 """);
         descriptionArea.setEditable(false);
         descriptionArea.setLineWrap(true);
