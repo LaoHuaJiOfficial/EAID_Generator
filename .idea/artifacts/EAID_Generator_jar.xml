@@ -1,0 +1,13 @@
+<component name="ArtifactManager">
+  <artifact name="EAID-Generator:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/EAID_Generator_jar</output-path>
+    <root id="root">
+      <element id="archive" name="EAID-Generator.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/resources/META-INF/MANIFEST.MF" />
+        </element>
+        <element id="module-output" name="EAID-Generator" />
+      </element>
+    </root>
+  </artifact>
+</component>
