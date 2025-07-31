@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
@@ -37,7 +36,7 @@ public class Main {
     private static final AtomicLong attempts = new AtomicLong();
 
     private static final AtomicBoolean shouldStop = new AtomicBoolean(false);
-    private static final ExecutorService pool = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors() / 2));
+    private static final ExecutorService pool = Executors.newFixedThreadPool(Math.max(2, Runtime.getRuntime().availableProcessors() / 5));
 
     private static final JTextField idField = new JTextField(20);
     private static final JTextField hashField = new JTextField(6);
@@ -136,11 +135,12 @@ public class Main {
         }
 
         String text = idField.getText();
+        System.out.println(text);
         decodeParallel(text, hash);
     }
 
     public static void decodeParallel(String pattern, long hashValue) {
-        if (pattern.length() > 22) {
+        if (pattern.length() > 16) {
             resultArea.setText("EAID 过长喵\n");
             return;
         }
@@ -153,6 +153,9 @@ public class Main {
             if (newPattern.charAt(i) == '!') wildcardIndices.add(i);
         }
 
+        int wildcardCount = wildcardIndices.size();
+        int charsetLen = charset.length;
+        long mod = 0x100000000L;
         long total = (long) Math.pow(charset.length, wildcardIndices.size());
         long startTime = System.currentTimeMillis();
 
@@ -169,7 +172,7 @@ public class Main {
         logger.setDaemon(true);
         logger.start();
 
-        int threads = Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
+        int threads = Math.max(2, Runtime.getRuntime().availableProcessors() / 5);
         long chunk = total / threads;
         CountDownLatch latch = new CountDownLatch(threads);
 
@@ -181,15 +184,20 @@ public class Main {
                     char[] attempt = newPattern.toCharArray();
                     for (long i = start; i < end && !shouldStop.get(); i++) {
                         long idx = i, extra = 0;
-                        for (int j = 0; j < wildcardIndices.size(); j++) {
+                        for (int j = 0; j < wildcardCount; j++) {
+                            int charIndex = (int) (idx % charsetLen);
+                            idx /= charsetLen;
+
                             int pos = wildcardIndices.get(j);
-                            char ch = charset[(int) (idx % charset.length)];
-                            idx /= charset.length;
+                            char ch = charset[charIndex];
                             attempt[pos] = ch;
+
                             int weightIndex = size - pos - 1;
-                            extra = (extra + weight[weightIndex] * (ch - '!')) & 0xFFFFFFFFL;
+
+                            extra = (extra + (weight[weightIndex] * (ch - '!')) % mod) % mod;
                         }
-                        long totalHash = (baseHash + extra) & 0xFFFFFFFFL;
+                        long totalHash = (baseHash + extra) % mod;
+                        //System.out.println(Arrays.toString(attempt) + " " + extra + " " + Integer.toHexString((int) totalHash));
                         if (hashValue == 0 && textMap.containsKey((int) totalHash)) {
                             appendResult(attempt, textMap.get((int) totalHash));
                         } else if (totalHash == hashValue) {
@@ -214,16 +222,15 @@ public class Main {
     }
 
     private static void appendResult(char[] id, String name) {
-        SwingUtilities.invokeLater(() -> {
-            resultArea.append("\n查询 " + new String(id) + " 的中文ID：" + name);
-            resultArea.setCaretPosition(resultArea.getDocument().getLength());
-        });
+        resultArea.append("\n查询 " + new String(id) + " 的中文ID：" + name);
+        resultArea.setCaretPosition(resultArea.getDocument().getLength());
     }
 
     public static long encode(String input) {
         long result = 0;
-        for (char c : input.toCharArray()) {
-            result = ((result * 33) & 0xFFFFFFFFL) + (c - 32);
+        for (int i = 0; i < input.length(); i++) {
+            int value = input.charAt(i) - 32;
+            result = ((result * 33) & 0xFFFFFFFFL) + value;
         }
         return (result - 1) & 0xFFFFFFFFL;
     }
