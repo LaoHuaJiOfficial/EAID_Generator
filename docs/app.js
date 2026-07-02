@@ -112,7 +112,7 @@ async function startComputation() {
                 if (msg.count === 0 && !msg.stopped) {
                     el.results.textContent += '\n未找到可行 ID\n';
                 } else if (msg.bracketPrefix) {
-                    el.results.textContent += '\n计算使用前缀: ' + msg.bracketPrefix + '\n';
+                    el.results.textContent += '\n计算使用战队: ' + msg.bracketPrefix + '\n';
                 }
                 el.results.textContent += '\n任务已完成\n';
                 el.progress.textContent = msg.stopped ? '已终止' : '计算完成，共 ' + msg.count + ' 个结果';

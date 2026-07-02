@@ -3,6 +3,7 @@ import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -27,6 +28,7 @@ public class Main {
     private static final int MAX_ENCODE_LEN = 22;
     private static final int MAX_SINGLE_ID_LEN = 16;
     private static final int DEFAULT_MAX_RESULTS = 10;
+    private static final int MAX_TAIL_WILDCARDS = 8;
     private static final int MIN_BRACKET_PREFIX_LEN = 3;
     private static final int MAX_BRACKET_PREFIX_LEN = 4;
     private static final int MIN_CHAR_OFFSET;
@@ -88,13 +90,13 @@ public class Main {
         frame.setResizable(false);
         frame.setLayout(new BorderLayout());
         JTextArea descriptionArea = new JTextArea("""
-                \u4F7F\u7528\u8BF4\u660E\uFF1A\u586B\u5199 EAID \u56FA\u5B9A\u524D\u7F00\uFF0C\u751F\u6210\u5668\u5C06\u5728\u5C3E\u90E8\u8FFD\u52A0\u901A\u914D\u7B26\u8FDB\u884C\u5339\u914D\uFF1BHash \u4E3A 0 \u65F6\u5339\u914D\u4EFB\u610F\u4E2D\u6587\u540D
+                \u4F7F\u7528\u8BF4\u660E\uFF1A\u586B\u5199 EAID\uFF0C\u751F\u6210\u5668\u5C06\u5728\u5C3E\u90E8\u8FFD\u52A0\u901A\u914D\u7B26\u8FDB\u884C\u5339\u914D\uFF1BHash \u4E3A 0 \u65F6\u5339\u914D\u4EFB\u610F\u4E2D\u6587\u540D
                 \u793A\u4F8B     \u5728 EAID \u5904\u586B\u5199 Satori_\uFF0CHash \u5904\u586B\u5199 7D543A64\uFF08\u5BF9\u5E94\u6587\u672C\uFF1A\u7687\u5E1D\uFF09\u540E\u70B9\u51FB\u8BA1\u7B97
                                 \u751F\u6210\u5668\u5C06\u5C1D\u8BD5 Satori_\u3001Satori_@\u3001Satori_@@ \u2026 \u7B49\u5F62\u5F0F\uFF0C\u8F93\u51FA\u81F3\u591A N \u4E2A\u53EF\u884C ID
-                \u524D\u7F00     \u53EF\u7559\u7A7A\uFF0C\u6216\u586B\u5199 3-4 \u4E2A\u5B57\u7B26\uFF0C\u8BA1\u7B97\u65B9\u5F0F\u4E3A [\u524D\u7F00]+ID
+                \u6218\u961F     \u53EF\u7559\u7A7A\uFF0C\u6216\u586B\u5199 3-4 \u4E2A\u5B57\u7B26\uFF0C\u8BA1\u7B97\u65B9\u5F0F\u4E3A [\u6218\u961F]+ID
                 \u6570\u91CF\u4E0A\u9650  \u63A7\u5236\u6700\u591A\u8F93\u51FA\u7684\u53EF\u884C ID \u6570\u91CF\uFF0C\u9ED8\u8BA4\u4E3A 10
                 \u6218\u57301&4  \u9009\u62E9\u300C\u6218\u5730\u98CE\u4E91 1&4\u300D\u65F6\uFF0C\u4EC5\u4F7F\u7528\u4E24\u6B3E\u6E38\u620F\u5171\u6709\u7684 Hash \u6587\u672C\u8FDB\u884C\u5339\u914D\uFF0C\u9002\u5408\u9700\u8981\u53CC\u6E38\u620F\u901A\u7528\u7684 ID
-                \u6CE8\uFF1A  ID \u90E8\u5206\u6700\u957F 16 \u4F4D\uFF1B\u4F7F\u7528 Hash \u4E0A\u4E0B\u754C\u526A\u679D\u52A0\u901F\u641C\u7D22
+                \u6CE8\uFF1A  ID \u90E8\u5206\u6700\u957F 16 \u4F4D\uFF1B\u5C3E\u90E8\u901A\u914D\u7B26\u6700\u591A 8 \u4E2A\uFF1B\u4F7F\u7528 Hash \u4E0A\u4E0B\u754C\u526A\u679D\u52A0\u901F\u641C\u7D22
                 Repo: https://github.com/LaoHuaJiOfficial/EAID_Generator, Credit to BV1yEmYYdEH3
                 """);
         descriptionArea.setEditable(false);
@@ -119,7 +121,7 @@ public class Main {
         row1.add(encodeBtn);
         row1.add(stopBtn);
         JPanel row2 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        row2.add(new JLabel("\u524D\u7F00:"));
+        row2.add(new JLabel("\u6218\u961F:"));
         row2.add(prefixField);
         row2.add(new JLabel("EAID:"));
         row2.add(idField);
@@ -194,7 +196,7 @@ public class Main {
         try {
             bracketPrefix = parseBracketPrefix(prefixField.getText());
         } catch (IllegalArgumentException ex) {
-            resultArea.append("\n\u524D\u7F00\u8F93\u5165\u6709\u8BEF: " + ex.getMessage());
+            resultArea.append("\n\u6218\u961F\u8F93\u5165\u6709\u8BEF: " + ex.getMessage());
             isRunning = false;
             encodeBtn.setText("\u8BA1\u7B97");
             return;
@@ -217,7 +219,7 @@ public class Main {
         }
         String prefix = raw.trim();
         if (prefix.length() < MIN_BRACKET_PREFIX_LEN || prefix.length() > MAX_BRACKET_PREFIX_LEN) {
-            throw new IllegalArgumentException("\u524D\u7F00\u9700\u4E3A 3-4 \u4E2A\u5B57\u7B26\uFF0C\u6216\u7559\u7A7A");
+            throw new IllegalArgumentException("\u6218\u961F\u9700\u4E3A 3-4 \u4E2A\u5B57\u7B26\uFF0C\u6216\u7559\u7A7A");
         }
         return "[" + prefix + "]";
     }
@@ -225,7 +227,7 @@ public class Main {
                                          Map<Integer, String> textMap, int[] sortedKeys, int maxResults) {
         String idBase = base.replace("@", "").trim();
         if (idBase.isEmpty()) {
-            resultArea.setText("\u8BF7\u586B\u5199 EAID \u524D\u7F00\n");
+            resultArea.setText("\u8BF7\u586B\u5199 EAID\n");
             finishComputation();
             return;
         }
@@ -235,13 +237,15 @@ public class Main {
             return;
         }
         if (bracketPrefix.length() + idBase.length() > MAX_ENCODE_LEN) {
-            resultArea.setText("\u524D\u7F00\u4E0E EAID \u5408\u8BA1\u8FC7\u957F\n");
+            resultArea.setText("\u6218\u961F\u4E0E EAID \u5408\u8BA1\u8FC7\u957F\n");
             finishComputation();
             return;
         }
-        int maxTailLen = Math.min(
-                MAX_SINGLE_ID_LEN - idBase.length(),
-                MAX_ENCODE_LEN - bracketPrefix.length() - idBase.length());
+        final int maxTailLen = Math.min(
+                Math.min(
+                        MAX_SINGLE_ID_LEN - idBase.length(),
+                        MAX_ENCODE_LEN - bracketPrefix.length() - idBase.length()),
+                MAX_TAIL_WILDCARDS);
         new Thread(() -> {
             try {
                 List<String> results = new ArrayList<>();
@@ -261,7 +265,7 @@ public class Main {
                 if (results.isEmpty() && !shouldStop.get()) {
                     resultArea.append("\n\u672A\u627E\u5230\u53EF\u884C ID \n");
                 } else if (!bracketPrefix.isEmpty()) {
-                    resultArea.append("\n\u8BA1\u7B97\u4F7F\u7528\u524D\u7F00: " + bracketPrefix + "\n");
+                    resultArea.append("\n\u8BA1\u7B97\u4F7F\u7528\u6218\u961F: " + bracketPrefix + "\n");
                 }
             } finally {
                 finishComputation();
@@ -287,8 +291,14 @@ public class Main {
             minExtra += weight * MIN_CHAR_OFFSET;
             maxExtra += weight * MAX_CHAR_OFFSET;
         }
-        long low = (baseHash + minExtra) % MOD;
-        long high = (baseHash + maxExtra) % MOD;
+        if (suffixRangeCoversAll(minExtra, maxExtra)) {
+            if (hashValue == 0) {
+                return sortedKeys.length > 0;
+            }
+            return true;
+        }
+        long low = modAdd(baseHash, minExtra);
+        long high = modAdd(baseHash, maxExtra);
         if (hashValue == 0) {
             return hasKeyInModularRange(sortedKeys, low, high);
         }
@@ -344,14 +354,18 @@ public class Main {
             }
             return;
         }
-        long low = (baseHash + partialExtra + context.suffixMinLinear[depth]) % MOD;
-        long high = (baseHash + partialExtra + context.suffixMaxLinear[depth]) % MOD;
-        if (hashValue == 0) {
-            if (!hasKeyInModularRange(sortedKeys, low, high)) {
+        long suffixMin = context.suffixMinLinear[depth];
+        long suffixMax = context.suffixMaxLinear[depth];
+        if (!suffixRangeCoversAll(suffixMin, suffixMax)) {
+            long low = modAdd(baseHash, partialExtra, suffixMin);
+            long high = modAdd(baseHash, partialExtra, suffixMax);
+            if (hashValue == 0) {
+                if (!hasKeyInModularRange(sortedKeys, low, high)) {
+                    return;
+                }
+            } else if (!isInModularRange(hashValue, low, high)) {
                 return;
             }
-        } else if (!isInModularRange(hashValue, low, high)) {
-            return;
         }
         for (int charIndex = 0; charIndex < CHARSET_LEN; charIndex++) {
             if (shouldStop.get() || results.size() >= maxResults || maxAdd <= 0) {
@@ -399,6 +413,19 @@ public class Main {
         }
         return new SearchContext(contributions, suffixMinLinear, suffixMaxLinear);
     }
+    private static long modAdd(long... terms) {
+        BigInteger sum = BigInteger.ZERO;
+        BigInteger bigMod = BigInteger.valueOf(MOD);
+        for (long term : terms) {
+            sum = sum.add(BigInteger.valueOf(term));
+        }
+        return sum.mod(bigMod).longValue();
+    }
+
+    private static boolean suffixRangeCoversAll(long minLinear, long maxLinear) {
+        return maxLinear - minLinear >= MOD - 1;
+    }
+
     private static boolean isInModularRange(long value, long low, long high) {
         if (low <= high) {
             return value >= low && value <= high;

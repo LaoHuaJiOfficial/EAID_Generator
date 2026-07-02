@@ -14,9 +14,9 @@
         </header>
 
         <section class="description">
-            <p>填写 EAID 固定前缀，生成器将在尾部追加通配符进行匹配；Hash 为 0 时匹配任意中文名。</p>
+            <p>填写 EAID，生成器将在尾部追加通配符进行匹配；Hash 为 0 时匹配任意中文名。</p>
             <p>示例：EAID 填 <code>Satori_</code>，Hash 填 <code>7D543A64</code>（皇帝），点击计算。</p>
-            <p>前缀可留空，或填写 3-4 个字符，计算方式为 <code>[前缀]+ID</code>。数量上限默认 10。</p>
+            <p>战队可留空，或填写 3-4 个字符，计算方式为 <code>[战队]+ID</code>。数量上限默认 10，尾部通配符最多 8 个。</p>
             <p class="repo"><a href="https://github.com/LaoHuaJiOfficial/EAID_Generator" target="_blank" rel="noopener">GitHub 仓库</a></p>
         </section>
 
@@ -28,7 +28,7 @@
                 <button type="button" id="btnStop" class="danger" disabled>终止</button>
             </div>
             <div class="row">
-                <label for="prefix">前缀</label>
+                <label for="prefix">战队</label>
                 <input id="prefix" type="text" maxlength="4" placeholder="3-4 字符">
                 <label for="eaid">EAID</label>
                 <input id="eaid" type="text" maxlength="16" placeholder="如 Satori_">

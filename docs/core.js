@@ -5,6 +5,7 @@ const EAIDCore = (() => {
     const MAX_ENCODE_LEN = 22;
     const MAX_SINGLE_ID_LEN = 16;
     const DEFAULT_MAX_RESULTS = 10;
+    const MAX_TAIL_WILDCARDS = 8;
     const MIN_BRACKET_PREFIX_LEN = 3;
     const MAX_BRACKET_PREFIX_LEN = 4;
     const WEIGHT = [
@@ -27,6 +28,18 @@ const EAIDCore = (() => {
 
     function u32(n) {
         return Number(BigInt(n) & 0xFFFFFFFFn);
+    }
+
+    function modAdd(...terms) {
+        let sum = 0n;
+        for (const term of terms) {
+            sum += BigInt(term);
+        }
+        return u32(sum);
+    }
+
+    function suffixRangeCoversAll(minLinear, maxLinear) {
+        return maxLinear - minLinear >= Number(MOD - 1n);
     }
 
     function encode(input) {
@@ -81,7 +94,7 @@ const EAIDCore = (() => {
         }
         const prefix = raw.trim();
         if (prefix.length < MIN_BRACKET_PREFIX_LEN || prefix.length > MAX_BRACKET_PREFIX_LEN) {
-            throw new Error('前缀需为 3-4 个字符，或留空');
+            throw new Error('战队需为 3-4 个字符，或留空');
         }
         return '[' + prefix + ']';
     }
@@ -164,8 +177,14 @@ const EAIDCore = (() => {
             minExtra += weight * MIN_CHAR_OFFSET;
             maxExtra += weight * MAX_CHAR_OFFSET;
         }
-        const low = u32(baseHash + minExtra);
-        const high = u32(baseHash + maxExtra);
+        if (suffixRangeCoversAll(minExtra, maxExtra)) {
+            if (hashValue === 0) {
+                return sortedKeys.length > 0;
+            }
+            return true;
+        }
+        const low = modAdd(baseHash, minExtra);
+        const high = modAdd(baseHash, maxExtra);
         if (hashValue === 0) {
             return hasKeyInModularRange(sortedKeys, low, high);
         }
@@ -212,14 +231,18 @@ const EAIDCore = (() => {
             }
             return;
         }
-        const low = u32(baseHash + partialExtra + context.suffixMinLinear[depth]);
-        const high = u32(baseHash + partialExtra + context.suffixMaxLinear[depth]);
-        if (hashValue === 0) {
-            if (!hasKeyInModularRange(sortedKeys, low, high)) {
+        const suffixMin = context.suffixMinLinear[depth];
+        const suffixMax = context.suffixMaxLinear[depth];
+        if (!suffixRangeCoversAll(suffixMin, suffixMax)) {
+            const low = modAdd(baseHash, partialExtra, suffixMin);
+            const high = modAdd(baseHash, partialExtra, suffixMax);
+            if (hashValue === 0) {
+                if (!hasKeyInModularRange(sortedKeys, low, high)) {
+                    return;
+                }
+            } else if (!isInModularRange(hashValue, low, high)) {
                 return;
             }
-        } else if (!isInModularRange(hashValue, low, high)) {
-            return;
         }
         for (let charIndex = 0; charIndex < CHARSET_LEN; charIndex++) {
             if (shouldStop() || results.length >= maxResults || maxAdd <= 0) {
@@ -271,17 +294,18 @@ const EAIDCore = (() => {
     function decodeSingleTail(bracketPrefix, base, hashValue, textMap, sortedKeys, maxResults, shouldStop, callbacks) {
         const idBase = base.replace(/@/g, '').trim();
         if (idBase === '') {
-            return { error: '请填写 EAID 前缀' };
+            return { error: '请填写 EAID' };
         }
         if (idBase.length > MAX_SINGLE_ID_LEN) {
             return { error: 'EAID 部分不能超过 ' + MAX_SINGLE_ID_LEN + ' 位' };
         }
         if (bracketPrefix.length + idBase.length > MAX_ENCODE_LEN) {
-            return { error: '前缀与 EAID 合计过长' };
+            return { error: '战队与 EAID 合计过长' };
         }
         const maxTailLen = Math.min(
             MAX_SINGLE_ID_LEN - idBase.length,
-            MAX_ENCODE_LEN - bracketPrefix.length - idBase.length
+            MAX_ENCODE_LEN - bracketPrefix.length - idBase.length,
+            MAX_TAIL_WILDCARDS
         );
         const results = [];
         const seen = new Set();
@@ -300,6 +324,7 @@ const EAIDCore = (() => {
     return {
         CHARSET,
         DEFAULT_MAX_RESULTS,
+        MAX_TAIL_WILDCARDS,
         encode,
         parseBundle,
         buildSortedKeys,
