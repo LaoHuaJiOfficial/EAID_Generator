@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EA ID 中文查询工具</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>EA ID 中文查询工具</h1>
+            <p class="subtitle">网页版 v0.3.0 · 计算在本地浏览器完成</p>
+        </header>
+
+        <section class="description">
+            <p>填写 EAID 固定前缀，生成器将在尾部追加通配符进行匹配；Hash 为 0 时匹配任意中文名。</p>
+            <p>示例：EAID 填 <code>Satori_</code>，Hash 填 <code>7D543A64</code>（皇帝），点击计算。</p>
+            <p>前缀可留空，或填写 3-4 个字符，计算方式为 <code>[前缀]+ID</code>。数量上限默认 10。</p>
+            <p class="repo"><a href="https://github.com/LaoHuaJiOfficial/EAID_Generator" target="_blank" rel="noopener">GitHub 仓库</a></p>
+        </section>
+
+        <section class="controls">
+            <div class="row">
+                <label for="game">游戏</label>
+                <select id="game"></select>
+                <button type="button" id="btnCompute" class="primary">计算</button>
+                <button type="button" id="btnStop" class="danger" disabled>终止</button>
+            </div>
+            <div class="row">
+                <label for="prefix">前缀</label>
+                <input id="prefix" type="text" maxlength="4" placeholder="3-4 字符">
+                <label for="eaid">EAID</label>
+                <input id="eaid" type="text" maxlength="16" placeholder="如 Satori_">
+                <label for="hash">Hash</label>
+                <input id="hash" type="text" maxlength="8" placeholder="8 位十六进制">
+                <label for="limit">数量上限</label>
+                <input id="limit" type="number" min="1" max="9999" class="short">
+            </div>
+            <p id="progress" class="progress">当前未执行任何查询</p>
+        </section>
+
+        <section class="output">
+            <div class="panel">
+                <label for="localization">词库</label>
+                <textarea id="localization" readonly spellcheck="false"></textarea>
+            </div>
+            <div class="panel">
+                <label for="results">结果</label>
+                <textarea id="results" readonly spellcheck="false"></textarea>
+            </div>
+        </section>
+    </div>
+
+    <script src="core.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
